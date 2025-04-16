@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:make_it_a_habit/screens/focus_timer_screen.dart';
 import 'package:make_it_a_habit/screens/habit_tracker_screen.dart';
 import 'package:make_it_a_habit/screens/daily_planner_screen.dart';
+import 'package:make_it_a_habit/screens/home_screen.dart';
 
 void main() {
   runApp(const ProductivityApp());
@@ -15,15 +16,12 @@ class ProductivityApp extends StatelessWidget {
     return MaterialApp(
       title: 'Productivity App',
       theme: ThemeData(
-        primarySwatch: Colors.teal,
-        primaryColor: Colors.teal,
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.teal)
-            .copyWith(secondary: Colors.tealAccent),
-        scaffoldBackgroundColor: Colors.teal[50],
+        primaryColor: Colors.teal, // Updated to teal based on your preference
+        scaffoldBackgroundColor: const Color(0xFFF5F5F5), // Off-white
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             foregroundColor: Colors.white,
-            backgroundColor: Colors.teal, // Soft Blue for buttons
+            backgroundColor: Colors.teal, // Teal for buttons
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -43,8 +41,9 @@ class ProductivityApp extends StatelessWidget {
           fillColor: Colors.white,
         ),
       ),
-      home: const FocusTimerScreen(),
+      home: const HomeScreen(),
       routes: {
+        '/focus_timer': (context) => const FocusTimerScreen(),
         '/habit_tracker': (context) => const HabitTrackerScreen(),
         '/daily_planner': (context) => const DailyPlannerScreen(),
       },

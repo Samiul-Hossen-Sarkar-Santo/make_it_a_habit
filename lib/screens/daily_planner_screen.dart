@@ -219,7 +219,12 @@ class _DailyPlannerScreenState extends State<DailyPlannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily Planner'),
+        title: const Text(
+          'Daily Planner',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         backgroundColor: Theme.of(context).primaryColor,
         actions: [
           PopupMenuButton<String>(

@@ -77,7 +77,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
   }
 
   void playCompletionSound() {
-    playSound('assets/sounds/congratulations.mp3');
+    playSound('sounds/congratulations.mp3');
   }
 
   void startTimer() {
@@ -85,29 +85,27 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
       setState(() {
         isRunning = true;
       });
-      int completedFocusSessions = 0;
       timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
           if (remainingSeconds > 0) {
             remainingSeconds--;
           } else {
-            completedFocusSessions++;
-            if (completedFocusSessions < cycles) {
-              // Switch to break after each focus session except the last
+            // Switch between focus and break
+            if (isFocusPhase) {
               triggerAlarm();
               isFocusPhase = false;
               remainingSeconds = breakTime * 60;
               setState(() {
-                motivationalMessage =
-                    messages[completedFocusSessions % messages.length];
+                motivationalMessage = messages[currentCycle % messages.length];
               });
-            } else if (completedFocusSessions == cycles) {
-              // Last focus session completed
-              playCompletionSound();
-              resetTimer();
-              return;
             } else {
-              // Switch back to focus for the next cycle
+              triggerAlarm();
+              currentCycle++;
+              if (currentCycle > cycles) {
+                playCompletionSound();
+                resetTimer();
+                return;
+              }
               isFocusPhase = true;
               remainingSeconds = focusTime * 60;
               setState(() {
@@ -150,24 +148,13 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Focus Timer'),
-        backgroundColor: Theme.of(context).primaryColor,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.list),
-            onPressed: () {
-              Navigator.pushNamed(context, '/daily_planner');
-            },
-            tooltip: 'Go to Daily Planner',
+        title: const Text(
+          'Focus Timer',
+          style: TextStyle(
+            color: Colors.white,
           ),
-          IconButton(
-            icon: const Icon(Icons.track_changes_rounded),
-            onPressed: () {
-              Navigator.pushNamed(context, '/habit_tracker');
-            },
-            tooltip: 'Go to Habit Tracker',
-          ),
-        ],
+        ),
+        backgroundColor: Colors.teal,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
