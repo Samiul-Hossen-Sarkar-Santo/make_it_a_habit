@@ -289,6 +289,13 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                   onPressed: resetTimer,
                   child: const Text('Reset'),
                 ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/habit_tracker');
+                  },
+                  child: const Text('Go to Habit Tracker'),
+                ),
               ],
             ),
           ],

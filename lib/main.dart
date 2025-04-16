@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:make_it_a_habit/screens/focus_timer_screen.dart';
+import 'package:make_it_a_habit/screens/habit_tracker_screen.dart';
 
 void main() {
   runApp(const ProductivityApp());
@@ -39,6 +40,9 @@ class ProductivityApp extends StatelessWidget {
         ),
       ),
       home: const FocusTimerScreen(),
+      routes: {
+        '/habit_tracker': (context) => const HabitTrackerScreen(),
+      },
     );
   }
 }
