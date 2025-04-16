@@ -236,7 +236,10 @@ class _DailyPlannerScreenState extends State<DailyPlannerScreen> {
                   value: 'priority', child: Text('Sort by Priority')),
               const PopupMenuItem(value: 'manual', child: Text('Manual Sort')),
             ],
-            icon: const Icon(Icons.sort),
+            icon: const Icon(
+              Icons.sort,
+              color: Colors.white,
+            ),
           ),
         ],
       ),

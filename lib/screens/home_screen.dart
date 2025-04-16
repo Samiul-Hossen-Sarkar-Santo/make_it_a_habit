@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:make_it_a_habit/models/habit.dart';
-import 'package:make_it_a_habit/models/task.dart';
 import 'package:make_it_a_habit/screens/daily_planner_screen.dart';
 import 'package:make_it_a_habit/screens/focus_timer_screen.dart';
 import 'package:make_it_a_habit/screens/habit_tracker_screen.dart';
 import 'package:make_it_a_habit/services/habit_service.dart';
 import 'package:make_it_a_habit/services/task_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int totalHabits = 0;
   int tasksCompleted = 0;
   int totalTasks = 0;
-  int focusSessions = 0; // Placeholder for now
+  int focusSessions = 0; // Will be updated from FocusTimer
 
   @override
   void initState() {
@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadSummaryData() async {
+    final prefs = await SharedPreferences.getInstance();
     final loadedHabits = await habitService.loadHabits();
     final loadedTasks = await taskService.loadTasks();
     setState(() {
@@ -44,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       habitsCompleted = loadedHabits.where((h) => h.isDoneToday).length;
       totalTasks = loadedTasks.length;
       tasksCompleted = loadedTasks.where((t) => t.isDone).length;
-      // focusSessions will be integrated later when FocusTimer state is tracked
+      focusSessions = prefs.getInt('focusSessions') ?? 0; // Corrected here
     });
   }
 
@@ -103,15 +104,19 @@ class _HomeDashboardState extends State<HomeDashboard> {
   int totalHabits = 0;
   int tasksCompleted = 0;
   int totalTasks = 0;
-  int focusSessions = 0; // Placeholder for now
+  int focusSessions = 0; // Will be updated from FocusTimer
+  Map<String, int> habitHistory = {}; // Daily habit completions (last 7 days)
+  Map<String, int> taskHistory = {}; // Daily task completions (last 7 days)
 
   @override
   void initState() {
     super.initState();
     _loadSummaryData();
+    _loadHistoryData();
   }
 
   Future<void> _loadSummaryData() async {
+    final prefs = await SharedPreferences.getInstance();
     final loadedHabits = await habitService.loadHabits();
     final loadedTasks = await taskService.loadTasks();
     setState(() {
@@ -119,8 +124,40 @@ class _HomeDashboardState extends State<HomeDashboard> {
       habitsCompleted = loadedHabits.where((h) => h.isDoneToday).length;
       totalTasks = loadedTasks.length;
       tasksCompleted = loadedTasks.where((t) => t.isDone).length;
-      // focusSessions will be integrated later
+      focusSessions = prefs.getInt('focusSessions') ?? 0; // Corrected here
     });
+  }
+
+  Future<void> _loadHistoryData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final habitHistoryJson = prefs.getString('habitHistory') ?? '{}';
+    final taskHistoryJson = prefs.getString('taskHistory') ?? '{}';
+    setState(() {
+      habitHistory = (jsonDecode(habitHistoryJson) as Map<String, dynamic>).map(
+        (key, value) => MapEntry(key, value as int),
+      );
+      taskHistory = (jsonDecode(taskHistoryJson) as Map<String, dynamic>).map(
+        (key, value) => MapEntry(key, value as int),
+      );
+    });
+  }
+
+  Future<void> _saveHistoryData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('habitHistory', jsonEncode(habitHistory));
+    await prefs.setString('taskHistory', jsonEncode(taskHistory));
+  }
+
+  Future<void> _updateHistory() async {
+    final now = DateTime.now();
+    final today = '${now.year}-${now.month}-${now.day}';
+    final loadedHabits = await habitService.loadHabits();
+    final loadedTasks = await taskService.loadTasks();
+    setState(() {
+      habitHistory[today] = loadedHabits.where((h) => h.isDoneToday).length;
+      taskHistory[today] = loadedTasks.where((t) => t.isDone).length;
+    });
+    await _saveHistoryData();
   }
 
   @override
@@ -135,6 +172,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
     } else if (habitPercentage >= 50 || taskPercentage >= 50) {
       motivationalMessage = 'Good work—keep the momentum!';
     }
+
+    // Calculate last 7 days' data
+    final now = DateTime.now();
+    final last7Days = List.generate(7, (i) => now.subtract(Duration(days: i)));
+    last7Days.map((date) {
+      final dateStr = '${date.year}-${date.month}-${date.day}';
+      return habitHistory[dateStr] ?? 0;
+    }).toList();
+    last7Days.map((date) {
+      final dateStr = '${date.year}-${date.month}-${date.day}';
+      return taskHistory[dateStr] ?? 0;
+    }).toList();
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -167,6 +216,53 @@ class _HomeDashboardState extends State<HomeDashboard> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          const Text(
+            'Last 7 Days Summary',
+            style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 4,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  ...last7Days.reversed.map((date) {
+                    final dateStr = '${date.year}-${date.month}-${date.day}';
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${date.day}/${date.month}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                'Habits: ${habitHistory[dateStr] ?? 0}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                'Tasks: ${taskHistory[dateStr] ?? 0}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
           if (motivationalMessage.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
@@ -181,9 +277,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               setState(() {
-                _loadSummaryData(); // Refresh data
+                _loadSummaryData();
+                _updateHistory(); // Update history on refresh
               });
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -76,8 +77,12 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
     playSound('assets/sounds/alarm.mp3');
   }
 
-  void playCompletionSound() {
+  void playCompletionSound() async {
     playSound('sounds/congratulations.mp3');
+    // Increment focus sessions when a full cycle is completed
+    final prefs = await SharedPreferences.getInstance();
+    int currentSessions = prefs.getInt('focusSessions') ?? 0;
+    await prefs.setInt('focusSessions', currentSessions + 1);
   }
 
   void startTimer() {
@@ -248,12 +253,16 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                     value: remainingSeconds /
                         (isFocusPhase ? focusTime * 60 : breakTime * 60),
                     strokeWidth: 8,
-                    color: isFocusPhase ? Colors.blue : Colors.green,
+                    color: isFocusPhase ? Colors.teal : Colors.orange,
                   ),
                 ),
                 Text(
                   formatTime(remainingSeconds),
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: TextStyle(
+                    fontSize: 38,
+                    fontWeight: FontWeight.bold,
+                    color: isFocusPhase ? Colors.teal : Colors.orange,
+                  ),
                 ),
               ],
             ),
