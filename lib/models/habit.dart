@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class Habit {
-  final String name;
-  final TimeOfDay reminderTime;
+  late final String name;
+  late final TimeOfDay reminderTime;
   bool isDoneToday;
   int streak;
   DateTime? lastCompletedDate;

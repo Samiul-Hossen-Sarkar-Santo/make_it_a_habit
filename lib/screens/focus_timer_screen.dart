@@ -77,7 +77,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
   }
 
   void playCompletionSound() {
-    playSound('sounds/congratulations.mp3');
+    playSound('assets/sounds/congratulations.mp3');
   }
 
   void startTimer() {
@@ -85,27 +85,29 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
       setState(() {
         isRunning = true;
       });
+      int completedFocusSessions = 0;
       timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
           if (remainingSeconds > 0) {
             remainingSeconds--;
           } else {
-            // Switch between focus and break
-            if (isFocusPhase) {
+            completedFocusSessions++;
+            if (completedFocusSessions < cycles) {
+              // Switch to break after each focus session except the last
               triggerAlarm();
               isFocusPhase = false;
               remainingSeconds = breakTime * 60;
               setState(() {
-                motivationalMessage = messages[currentCycle % messages.length];
+                motivationalMessage =
+                    messages[completedFocusSessions % messages.length];
               });
+            } else if (completedFocusSessions == cycles) {
+              // Last focus session completed
+              playCompletionSound();
+              resetTimer();
+              return;
             } else {
-              triggerAlarm();
-              currentCycle++;
-              if (currentCycle > cycles) {
-                playCompletionSound();
-                resetTimer();
-                return;
-              }
+              // Switch back to focus for the next cycle
               isFocusPhase = true;
               remainingSeconds = focusTime * 60;
               setState(() {
@@ -150,6 +152,22 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
       appBar: AppBar(
         title: const Text('Focus Timer'),
         backgroundColor: Theme.of(context).primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list),
+            onPressed: () {
+              Navigator.pushNamed(context, '/daily_planner');
+            },
+            tooltip: 'Go to Daily Planner',
+          ),
+          IconButton(
+            icon: const Icon(Icons.track_changes_rounded),
+            onPressed: () {
+              Navigator.pushNamed(context, '/habit_tracker');
+            },
+            tooltip: 'Go to Habit Tracker',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -288,13 +306,6 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                 ElevatedButton(
                   onPressed: resetTimer,
                   child: const Text('Reset'),
-                ),
-                const SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/habit_tracker');
-                  },
-                  child: const Text('Go to Habit Tracker'),
                 ),
               ],
             ),
