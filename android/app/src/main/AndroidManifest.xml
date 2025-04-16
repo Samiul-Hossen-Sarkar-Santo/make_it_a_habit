@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.VIBRATE" />
     <application
-        android:label="make_it_a_habit"
+        android:label="Make It A Habit"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
